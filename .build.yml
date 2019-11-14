@@ -1,0 +1,14 @@
+image: debian/stretch
+packages:
+  - openjdk-8-jdk-headless
+sources:
+  - https://github.com/delthas/giteart.git
+secrets:
+  - 63d7a0ac-2635-4d42-9709-efcd2cf74858 # ssh deploy key
+tasks:
+  - build: |
+      cd giteart
+      ./gradlew assemble
+  - deploy: |
+      cd giteart
+      scp -o StrictHostKeyChecking=no -q build/libs/giteart.jar user@delthas.fr:/srv/http/blog/giteart.jar

@@ -1,0 +1,8 @@
+# http server listen port
+port: 12345
+# sr.ht access token
+token: paste_token_here
+# webhook secret
+secret: diode280
+# list of sr.ht users to give read access to build manifests
+readers: [delthas]
