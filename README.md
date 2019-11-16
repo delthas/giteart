@@ -11,7 +11,7 @@
 - [generate an sr.ht token](https://meta.sr.ht/oauth/personal-token)
 - edit `giteart.example.yml` into `giteart.yml`
 - run giteart (`java -jar giteart.jar` or `java -jar giteart.jar /path/to/giteart.yml`, defaults to `giteart.yml`)
-- keep gitart running (you could typically use a systemd unit)
+- keep giteart running (you could typically use a systemd unit)
 
 ### webhook
 
