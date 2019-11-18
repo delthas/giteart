@@ -157,6 +157,8 @@ fun start(configuration: Configuration) {
                                             var url = parser.text
                                             if(url == event.url) {
                                                 url += "#${event.commit}"
+                                            } else if("$url.git" == event.url) {
+                                                url += ".git#${event.commit}"
                                             }
                                             generator.writeString(url)
                                         } else {
