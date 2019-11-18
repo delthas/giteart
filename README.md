@@ -23,6 +23,7 @@
 
 ### manifest
 
-- [add a build manifest to your repository](https://man.sr.ht/builds.sr.ht/#build-manifests) 
+- [add a build manifest to your repository](https://man.sr.ht/builds.sr.ht/#build-manifests)
+  - make sure you name it `.build.yml` or you put it in a `.builds/` folder!
 - commit and push
 - [check a build was queued](https://builds.sr.ht/)

@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
+    implementation("org.slf4j:slf4j-simple:1.7.21")
     implementation("org.json:json:20190722")
     implementation("org.jsoup:jsoup:1.12.1")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.9")
