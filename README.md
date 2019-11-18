@@ -19,6 +19,7 @@
 - go to your repository webhooks settings and add a new *gitea* webhook (page url is `https://path/to/repository/settings/hooks/gitea/new`)
   - `target URL` is `http://your.server:port/hook`, where port is your configuration port
   - `secret` is your configuration secret
+  - leave other settings to their default values (`POST` with `application/json`, triggered on `push events` on branch filter `*`, `active`)
 
 ### manifest
 
