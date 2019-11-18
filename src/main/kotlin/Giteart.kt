@@ -84,24 +84,26 @@ fun start(configuration: Configuration) {
     }
     Spark.post("/hook") { req, res ->
         if(req.headers("X-Gitea-Event") != "push") {
-            return@post ""
+            return@post "hook ignored; event is not a push event"
         }
         try {
             val json = JSONObject(req.body())
             if(configuration.secret.isNotEmpty() && json.getString("secret") != configuration.secret) {
-                return@post ""
+                res.status(403)
+                return@post "invalid secret"
             }
             if(json.getString("ref") != "refs/heads/master") {
-                return@post ""
+                return@post "hook ignored; pushed branch is not master"
             }
             val name = json.getJSONObject("repository").getString("name")
             val commit = json.getJSONArray("commits").getJSONObject(0).getString("id")
             val url = json.getJSONObject("repository").getString("clone_url")
             events.add(Event(name, commit, url))
         } catch(ignore: JSONException) {
-            return@post ""
+            res.status(400)
+            return@post "invalid request: error: ${ignore.message}"
         }
-        ""
+        "ok"
     }
     while(true) {
         val event = events.take()
