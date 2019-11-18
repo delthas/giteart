@@ -79,7 +79,7 @@ fun start(configuration: Configuration) {
     }
     Spark.port(configuration.port)
     Spark.get("/") { req, res ->
-        ""
+        return@get Configuration::class.java.getResourceAsStream("/index.html").reader().readText()
     }
     Spark.post("/hook") { req, res ->
         if(req.headers("X-Gitea-Event") != "push") {
