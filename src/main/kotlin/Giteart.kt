@@ -78,8 +78,9 @@ fun start(configuration: Configuration) {
         exitProcess(1)
     }
     Spark.port(configuration.port)
+    Spark.staticFiles.location("/html")
     Spark.get("/") { req, res ->
-        return@get Configuration::class.java.getResourceAsStream("/index.html").reader().readText()
+        return@get Configuration::class.java.getResourceAsStream("/index.html")
     }
     Spark.post("/hook") { req, res ->
         if(req.headers("X-Gitea-Event") != "push") {
