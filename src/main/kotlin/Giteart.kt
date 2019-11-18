@@ -208,7 +208,10 @@ fun start(configuration: Configuration) {
                 manifestFun(build)
             }
 
-            Files.list(repo.resolve(".builds")).filter {it.fileName.toString().endsWith(".yml") }.filter { Files.isRegularFile(it)}.forEach { manifestFun(it) }
+            val builds = repo.resolve(".builds")
+            if(Files.isDirectory(builds)) {
+                Files.list(builds).filter { it.fileName.toString().endsWith(".yml") }.filter { Files.isRegularFile(it) }.forEach { manifestFun(it) }
+            }
         } catch (e: InterruptedException) {
             return
         } catch (e: Exception) {
