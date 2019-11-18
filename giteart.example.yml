@@ -6,3 +6,5 @@ token: paste_token_here
 secret: diode280
 # list of sr.ht users to give read access to build manifests
 readers: [delthas]
+# sourcehut instance to use
+instance: "https://builds.sr.ht"

@@ -56,7 +56,8 @@ data class Configuration(
         val token: String,
         val secret: String,
         val port: Int,
-        val readers: List<String>?)
+        val readers: List<String>?,
+        val instance: String?)
 
 data class Event(val repo: String, val commit: String, val url: String)
 
@@ -185,14 +186,14 @@ fun start(configuration: Configuration) {
                         put("tags", listOf(event.repo, name, "giteart"))
                         put("access:read", configuration.readers)
                     }.toString()
-                    val conn = URL("https://builds.sr.ht/api/jobs").openConnection() as HttpURLConnection
+                    val conn = URL("${configuration.instance ?: "https://builds.sr.ht"}/api/jobs").openConnection() as HttpURLConnection
                     conn.apply {
                         addRequestProperty("Authorization", "token ${configuration.token}")
                         addRequestProperty("Content-Type", "application/json")
                         doOutput = true
                         outputStream.bufferedWriter().apply { write(json) }.flush()
                         if(responseCode !in 200 until 300) {
-                            throw IOException("builds.sr.ht API error: " + errorStream.bufferedReader().use { it.readText() })
+                            throw IOException("sourcehut API error: " + errorStream.bufferedReader().use { it.readText() })
                         }
                     }
                 } catch(e: InterruptedException) {
