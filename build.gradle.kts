@@ -30,12 +30,6 @@ tasks.withType<KotlinCompile> {
 }
 
 tasks.jar {
-    enabled = false
-}
-
-val jarCore by tasks.registering(Jar::class) {
-    from(sourceSets.main.get().output)
-
     dependsOn(configurations.runtimeClasspath)
     from({
         configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
@@ -48,8 +42,4 @@ val jarCore by tasks.registering(Jar::class) {
     }
 
     archiveName = "giteart.jar"
-}
-
-tasks.assemble {
-    dependsOn(jarCore)
 }
