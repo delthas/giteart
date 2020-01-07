@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
 import com.fasterxml.jackson.module.kotlin.*
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import spark.Spark
@@ -40,6 +41,28 @@ fun Path.deleteTree() {
             return FileVisitResult.CONTINUE
         }
     })
+}
+
+private fun JSONArray.iter() : JSONIterable {
+    return JSONIterable(this)
+}
+
+class JSONIterable(private val array: JSONArray) : Iterable<JSONObject> {
+    override operator fun iterator(): Iterator<JSONObject> {
+        return JSONIterator(array)
+    }
+}
+
+class JSONIterator(private val array: JSONArray) : Iterator<JSONObject> {
+    private var i = 0
+
+    override operator fun hasNext(): Boolean {
+        return i < array.length()
+    }
+
+    override operator fun next(): JSONObject {
+        return array.getJSONObject(i++)
+    }
 }
 
 fun fullPath(program: String): Path? {
@@ -95,9 +118,14 @@ fun start(configuration: Configuration) {
             if(json.getString("ref") != "refs/heads/master") {
                 return@post "hook ignored; pushed branch is not master"
             }
+            if(json.getJSONArray("commits").iter().all { it.getString("message").contains("[skip ci]", ignoreCase = true) }) {
+                return@post "hook ignored; only skippable commits"
+            }
+
             val name = json.getJSONObject("repository").getString("name")
             val commit = json.getJSONArray("commits").getJSONObject(0).getString("id")
             val url = json.getJSONObject("repository").getString("clone_url")
+
             events.add(Event(name, commit, url))
         } catch(ignore: JSONException) {
             res.status(400)
