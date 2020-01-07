@@ -152,14 +152,15 @@ fun start(configuration: Configuration) {
                     val generator = factory.createGenerator(sout)
                     Files.newInputStream(path).buffered().use {
                         val parser = factory.createParser(it)
-                        var found = false
+                        var environmentFound = false
+                        var sourcesFound = false
                         parser.nextToken()
                         generator.writeStartObject()
                         while(true) {
                             val field = parser.nextFieldName() ?: break
                             when (field) {
                                 "environment" -> {
-                                    found = true
+                                    environmentFound = true
                                     parser.nextToken() // START_OBJECT
                                     generator.writeFieldName(field)
                                     generator.writeStartObject()
@@ -170,6 +171,7 @@ fun start(configuration: Configuration) {
                                     generator.writeEndObject()
                                 }
                                 "sources" -> {
+                                    sourcesFound = true
                                     parser.nextToken() // START_ARRAY
                                     generator.writeFieldName(field)
                                     generator.writeStartArray()
@@ -191,12 +193,20 @@ fun start(configuration: Configuration) {
                                 else -> generator.copyCurrentStructure(parser)
                             }
                         }
-                        if(!found) {
+                        if(!environmentFound) {
                             generator.apply {
                                 writeFieldName("environment")
                                 writeStartObject()
                                 environmentFun(generator)
                                 writeEndObject()
+                            }
+                        }
+                        if(!sourcesFound) {
+                            generator.apply {
+                                writeFieldName("sources")
+                                writeStartArray()
+                                writeString(event.url + "#${event.commit}")
+                                writeEndArray()
                             }
                         }
                         generator.writeEndObject()
