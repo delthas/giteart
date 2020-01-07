@@ -109,19 +109,28 @@ fun start(configuration: Configuration) {
         val event = events.take()
         val repo = Files.createTempDirectory("giteart")
         try {
-            val process = ProcessBuilder(gitPath.toString(), "clone", "-q", "--depth", "1", "--", event.url, repo.toAbsolutePath().toString())
+            val cloneProcess = ProcessBuilder(gitPath.toString(), "clone", "-q", "--depth", "1", "--", event.url, repo.toAbsolutePath().toString())
                     .apply { environment()["GIT_TERMINAL_PROMPT"] = "0" }
                     .start()
-            if(!process.waitFor(30, TimeUnit.SECONDS)) {
+            if(!cloneProcess.waitFor(30, TimeUnit.SECONDS)) {
                 System.err.println("error: git clone timeout for repo " + event.url)
-                process.destroyForcibly().waitFor()
+                cloneProcess.destroyForcibly().waitFor()
                 continue
             }
-            if(process.exitValue() != 0) {
+            if(cloneProcess.exitValue() != 0) {
                 System.err.println("error: git clone failed:")
-                process.errorStream.copyTo(System.err)
+                cloneProcess.errorStream.copyTo(System.err)
                 continue
             }
+            val tagProcess = ProcessBuilder(gitPath.toString(), "describe", "--exact-match")
+                    .start()
+            if(!tagProcess.waitFor(5, TimeUnit.SECONDS)) {
+                System.err.println("error: git tag timeout for repo " + event.url)
+                tagProcess.destroyForcibly().waitFor()
+                continue
+            }
+            val isTag = tagProcess.exitValue() == 0
+
             val factory = YAMLFactory().apply {
                 disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
                 enable(YAMLGenerator.Feature.MINIMIZE_QUOTES)
@@ -131,6 +140,9 @@ fun start(configuration: Configuration) {
                 generator.apply {
                     writeStringField("GIT_COMMIT_ID", event.commit)
                     writeStringField("GIT_REPO_NAME", event.repo)
+                    if(isTag) {
+                        writeStringField("GIT_IS_TAG", "1")
+                    }
                 }
             }
             val manifestFun = fun (path: Path) {
