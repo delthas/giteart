@@ -127,6 +127,12 @@ fun start(configuration: Configuration) {
                 enable(YAMLGenerator.Feature.MINIMIZE_QUOTES)
             }
 
+            val environmentFun = fun(generator: YAMLGenerator) {
+                generator.apply {
+                    writeStringField("GIT_COMMIT_ID", event.commit)
+                    writeStringField("GIT_REPO_NAME", event.repo)
+                }
+            }
             val manifestFun = fun (path: Path) {
                 val name = path.fileName.toString().run { substring(0, length - ".yml".length ) }
                 try {
@@ -145,7 +151,7 @@ fun start(configuration: Configuration) {
                                     parser.nextToken() // START_OBJECT
                                     generator.writeFieldName(field)
                                     generator.writeStartObject()
-                                    generator.writeStringField("GIT_COMMIT_ID", event.commit)
+                                    environmentFun(generator)
                                     while (parser.nextToken() != JsonToken.END_OBJECT) {
                                         generator.copyCurrentStructure(parser)
                                     }
@@ -177,7 +183,7 @@ fun start(configuration: Configuration) {
                             generator.apply {
                                 writeFieldName("environment")
                                 writeStartObject()
-                                writeStringField("GIT_COMMIT_ID", event.commit)
+                                environmentFun(generator)
                                 writeEndObject()
                             }
                         }
