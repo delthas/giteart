@@ -82,7 +82,7 @@ data class Configuration(
         val readers: List<String>?,
         val instance: String?)
 
-data class Event(val repo: String, val commit: String, val url: String)
+data class Event(val repo: String, val commit: String, val url: String, val before: String?, val after: String?)
 
 private val events = LinkedBlockingQueue<Event>()
 
@@ -124,9 +124,11 @@ fun start(configuration: Configuration) {
 
             val name = json.getJSONObject("repository").getString("name")
             val commit = json.getJSONArray("commits").getJSONObject(0).getString("id")
+            val before = json.optString("before", null)
+            val after = json.optString("after", null)
             val url = json.getJSONObject("repository").getString("clone_url")
 
-            events.add(Event(name, commit, url))
+            events.add(Event(name, commit, url, before, after))
         } catch(ignore: JSONException) {
             res.status(400)
             return@post "invalid request: error: ${ignore.message}"
@@ -173,6 +175,9 @@ fun start(configuration: Configuration) {
             val environmentFun = fun(generator: YAMLGenerator) {
                 generator.apply {
                     writeStringField("GIT_COMMIT_ID", event.commit)
+                    if(event.before != null && event.after != null) {
+                        writeStringField("GIT_COMMIT_RANGE", "${event.before}..${event.after}")
+                    }
                     writeStringField("GIT_REPO_NAME", event.repo)
                     if(tag != null) {
                         writeStringField("GIT_TAG", tag)
