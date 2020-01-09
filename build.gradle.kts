@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream
+import org.apache.tools.ant.filters.ReplaceTokens
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -27,6 +29,28 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=enable")
     kotlinOptions.jvmTarget = "1.8"
+}
+
+fun gitHash(): String {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("git", "rev-parse", "--short", "HEAD")
+        standardOutput = stdout
+    }
+    return stdout.toString().trim()
+}
+
+tasks.processResources {
+    val tokens = mapOf("version" to gitHash())
+    inputs.properties(tokens)
+
+    from("src/main/resources") {
+        include("**/index.html")
+        filter<ReplaceTokens>("tokens" to tokens)
+    }
+    from("src/main/resources") {
+        exclude("**/index.html")
+    }
 }
 
 tasks.jar {
