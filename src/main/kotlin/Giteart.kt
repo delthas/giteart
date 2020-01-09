@@ -150,14 +150,20 @@ fun start(configuration: Configuration) {
                 cloneProcess.errorStream.copyTo(System.err)
                 continue
             }
-            val tagProcess = ProcessBuilder(gitPath.toString(), "describe", "--exact-match")
+            val tagProcess = ProcessBuilder(gitPath.toString(), "tag", "--points-at", "HEAD", "--sort", "version:creatordate")
+                    .directory(repo.toFile())
                     .start()
-            if(!tagProcess.waitFor(5, TimeUnit.SECONDS)) {
+            if(!tagProcess.waitFor(10, TimeUnit.SECONDS)) {
                 System.err.println("error: git tag timeout for repo " + event.url)
                 tagProcess.destroyForcibly().waitFor()
                 continue
             }
-            val isTag = tagProcess.exitValue() == 0
+            if(tagProcess.exitValue() != 0) {
+                System.err.println("error: git tag failed:")
+                tagProcess.errorStream.copyTo(System.err)
+                continue
+            }
+            val tag = tagProcess.inputStream.bufferedReader().lineSequence().lastOrNull()
 
             val factory = YAMLFactory().apply {
                 disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
@@ -168,8 +174,8 @@ fun start(configuration: Configuration) {
                 generator.apply {
                     writeStringField("GIT_COMMIT_ID", event.commit)
                     writeStringField("GIT_REPO_NAME", event.repo)
-                    if(isTag) {
-                        writeStringField("GIT_IS_TAG", "1")
+                    if(tag != null) {
+                        writeStringField("GIT_TAG", tag)
                     }
                 }
             }
