@@ -19,6 +19,8 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import kotlin.system.exitProcess
 
 fun Path.deleteTree() {
@@ -109,8 +111,19 @@ fun start(configuration: Configuration) {
         if(req.headers("X-Gitea-Event") != "push") {
             return@post "hook ignored; event is not a push event"
         }
+        val payload = req.body().trim()
+        val sha256Hmac = Mac.getInstance("HmacSHA256")
+        val secretKey = SecretKeySpec(configuration.secret.toByteArray(), "HmacSHA256")
+        sha256Hmac.init(secretKey)
+        val signatureOurs = sha256Hmac.doFinal(payload.toByteArray()).asUByteArray().joinToString("") { it.toString(16).padStart(2, '0') }
+        val signatureTheirs = req.headers("X-Gitea-Signature")
+        if(signatureOurs != signatureTheirs) {
+            res.status(403)
+            return@post "invalid signature"
+        }
+
         try {
-            val json = JSONObject(req.body())
+            val json = JSONObject(payload)
             if(configuration.secret.isNotEmpty() && json.getString("secret") != configuration.secret) {
                 res.status(403)
                 return@post "invalid secret"
